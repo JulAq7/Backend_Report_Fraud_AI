@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReportesRepository } from './reportes.repository';
-import { Reporte } from './entities/reporte.entity';
 import { ReporteResponseDto } from './dto/reporte-response.dto';
 import { UpdateReporteDto } from './dto/update-reporte.dto';
 
@@ -8,24 +7,20 @@ import { UpdateReporteDto } from './dto/update-reporte.dto';
 export class ReportesService {
   constructor(private readonly repository: ReportesRepository) {}
 
-  create(data: any): ReporteResponseDto {
+  async create(data: any): Promise<ReporteResponseDto> {
     try {
       this.checkReporte(data);
     } catch (e) {}
 
-    const reporte = new Reporte();
-
-    reporte.idReporte = this.repository.nextId();
-    reporte.idUsuario = data.idUsuario;
-    reporte.idSubcategoria = data.idSubcategoria;
-    reporte.idEstado = 1;
-    reporte.descripcion = data.descripcion;
-    reporte.plataforma = data.plataforma;
-    reporte.entidadReportada = data.entidadReportada;
-    reporte.publicacionAnonima = data.publicacionAnonima;
-    reporte.fechaRegistro = new Date();
-
-    this.repository.save(reporte);
+    const reporte = await this.repository.save({
+      idUsuario: data.idUsuario,
+      idSubcategoria: data.idSubcategoria,
+      idEstado: 1,
+      descripcion: data.descripcion,
+      plataforma: data.plataforma,
+      entidadReportada: data.entidadReportada,
+      publicacionAnonima: data.publicacionAnonima,
+    });
 
     console.log(
       'Reporte creado: ' +
@@ -39,42 +34,54 @@ export class ReportesService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
-  findAll(): ReporteResponseDto[] {
-    return this.repository
-      .findAll()
-      .map((r) => ReporteResponseDto.fromEntity(r));
+  async findAll(): Promise<ReporteResponseDto[]> {
+    const reportes = await this.repository.findAll();
+    return reportes.map((r) => ReporteResponseDto.fromEntity(r),);
   }
 
-  findOne(id: number): ReporteResponseDto {
-    const reporte = this.repository.findAll().find((r) => r.idReporte == id);
+  async findOne(id: number): Promise<ReporteResponseDto> {
+    const reporte = (await this.repository.findAll()).find(
+      (r) => r.idReporte == id,
+    );
 
     if (!reporte) {
-      throw new NotFoundException('Reporte ' + id + ' no encontrado');
+      throw new NotFoundException(
+        'Reporte ' + id + ' no encontrado',
+      );
     }
 
     return ReporteResponseDto.fromEntity(reporte);
   }
 
-  update(id: number, changes: UpdateReporteDto): ReporteResponseDto {
-    const reporte = this.repository.findAll().find((r) => r.idReporte == id);
+  async update(
+    id: number,
+    changes: UpdateReporteDto,
+  ): Promise<ReporteResponseDto> {
+    const reporte = (await this.repository.findAll()).find(
+      (r) => r.idReporte == id,
+    );
 
     if (!reporte) {
-      throw new NotFoundException('Reporte ' + id + ' no encontrado');
+      throw new NotFoundException('Reporte ' + id + ' no encontrado',);
     }
-
-    const updated = this.repository.update(id, changes)!;
-
+    
+    const updated = (
+      await this.repository.update(id, changes))!;
     return ReporteResponseDto.fromEntity(updated);
   }
 
-  remove(id: number): void {
-    const reporte = this.repository.findAll().find((r) => r.idReporte == id);
+  async remove(id: number): Promise<void> {
+    const reporte = (await this.repository.findAll()).find(
+      (r) => r.idReporte == id,
+    );
 
     if (!reporte) {
-      throw new NotFoundException('Reporte ' + id + ' no encontrado');
+      throw new NotFoundException(
+        'Reporte ' + id + ' no encontrado',
+      );
     }
 
-    this.repository.delete(id);
+    await this.repository.delete(id);
   }
 
   private checkReporte(data: any): boolean {
@@ -85,10 +92,15 @@ export class ReportesService {
             if (typeof data.descripcion === 'string') {
               if (data.plataforma) {
                 if (data.entidadReportada) {
-                  if (typeof data.publicacionAnonima === 'boolean') {
+                  if (
+                    typeof data.publicacionAnonima ===
+                    'boolean'
+                  ) {
                     return true;
                   } else {
-                    throw new Error('publicacionAnonima inválida');
+                    throw new Error(
+                      'publicacionAnonima inválida',
+                    );
                   }
                 } else {
                   throw new Error('sin entidadReportada');

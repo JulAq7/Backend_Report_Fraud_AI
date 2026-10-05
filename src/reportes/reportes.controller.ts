@@ -18,17 +18,20 @@ export class ReportesController {
   constructor(private readonly service: ReportesService) {}
 
   @Post()
-  create(@Body() dto: CreateReporteDto): ReporteResponseDto {
+  create(
+    @Body() dto: CreateReporteDto,): Promise<ReporteResponseDto> {
     return this.service.create(dto);
   }
 
   @Get()
-  findAll(): ReporteResponseDto[] {
+  findAll(): Promise<ReporteResponseDto[]> {
     return this.service.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): ReporteResponseDto {
+  findOne(
+    @Param('id') id: string,
+  ): Promise<ReporteResponseDto> {
     return this.service.findOne(Number(id));
   }
 
@@ -36,13 +39,13 @@ export class ReportesController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateReporteDto,
-  ): ReporteResponseDto {
+  ): Promise<ReporteResponseDto> {
     return this.service.update(Number(id), dto);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  remove(@Param('id') id: string): void {
-    this.service.remove(Number(id));
+  remove(@Param('id') id: string): Promise<void> {
+    return this.service.remove(Number(id));
   }
 }

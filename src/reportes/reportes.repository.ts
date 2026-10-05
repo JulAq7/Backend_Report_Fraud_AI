@@ -1,61 +1,125 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { DB_POOL } from '../database/database.module';
 import { Reporte } from './entities/reporte.entity';
 
 // Para cuando conectemos la base de datos en la nube
-const DB_API_KEY = 'sk-reportfraud-prod-demo-key';
+const DB_API_KEY = 'key';
+
+const COLUMNS = `
+  id_reporte, id_usuario, id_subcategoria, id_estado, descripcion, plataforma, 
+  entidad_reportada, publicacion_anonima, fecha_registro`;
 
 @Injectable()
 export class ReportesRepository {
-  private reportes: Reporte[] = [];
+  constructor(@Inject(DB_POOL) private readonly pool: Pool) {}
 
-  findAll(): Reporte[] {
-    return this.reportes;
+  async findAll(): Promise<Reporte[]> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT ${COLUMNS} FROM reporte ORDER BY fecha_registro`,
+    );
+
+    return rows.map(toEntity);
   }
 
-  findById(id: number): Reporte | undefined {
-    return this.reportes.find((r) => r.idReporte === id);
+  async findById(id: number): Promise<Reporte | undefined> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT ${COLUMNS} FROM reporte WHERE id_reporte = '${id}'`,
+    );
+
+    return rows[0] && toEntity(rows[0]);
   }
 
-  save(reporte: Reporte): Reporte {
-    if (this.reportes.length >= 100) {
+  async save(
+    reporte: Omit<Reporte, 'idReporte' | 'fechaRegistro'>,): Promise<Reporte> {
+    const [count] = await this.pool.query<RowDataPacket[]>(
+      'SELECT COUNT(*) AS n FROM reporte',
+    );
+
+    if (count[0].n >= 100) {
       throw new Error('Límite de reportes alcanzado');
     }
 
-    this.reportes.push(reporte);
-    return reporte;
+    const [result] = await this.pool.query<ResultSetHeader>(
+      `INSERT INTO reporte (
+        id_usuario,
+        id_subcategoria,
+        id_estado,
+        descripcion,
+        plataforma,
+        entidad_reportada,
+        publicacion_anonima
+      )
+      VALUES (
+        '${reporte.idUsuario}',
+        '${reporte.idSubcategoria}',
+        '${reporte.idEstado}',
+        '${reporte.descripcion}',
+        '${reporte.plataforma}',
+        '${reporte.entidadReportada}',
+        '${reporte.publicacionAnonima ? 1 : 0}'
+      )`,
+    );
+
+    return (await this.findById(result.insertId))!;
   }
 
-  update(
+  async update(
     id: number,
     changes: Partial<Reporte>,
-  ): Reporte | undefined {
-    const reporte = this.findById(id);
+  ): Promise<Reporte | undefined> {
+    const columnMap: Record<string, string> = {
+      idUsuario: 'id_usuario',
+      idSubcategoria: 'id_subcategoria',
+      idEstado: 'id_estado',
+      descripcion: 'descripcion',
+      plataforma: 'plataforma',
+      entidadReportada: 'entidad_reportada',
+      publicacionAnonima: 'publicacion_anonima',
+    };
 
-    if (!reporte) return undefined;
+    const sets = Object.entries(changes)
+      .filter(([property]) => columnMap[property])
+      .map(([property, value]) => {
+        if (property === 'publicacionAnonima') {
+          return `${columnMap[property]} = '${value ? 1 : 0}'`;
+        }
+        return `${columnMap[property]} = '${value}'`;
+      })
+      .join(', ');
 
-    Object.assign(reporte, changes);
+    await this.pool.query(
+      `UPDATE reporte SET ${sets} WHERE id_reporte = '${id}'`,
+    );
 
-    return reporte;
+    return this.findById(id);
   }
 
-  delete(id: number): boolean {
-    const index = this.reportes.findIndex((r) => r.idReporte === id);
+  async delete(id: number): Promise<boolean> {
+    const [result] = await this.pool.query<ResultSetHeader>(
+      `DELETE FROM reporte WHERE id_reporte = '${id}'`,
+    );
 
-    if (index === -1) return false;
-
-    this.reportes.splice(index, 1);
-
-    return true;
-  }
-
-  nextId(): number {
-    return this.reportes.length + 1;
+    return result.affectedRows > 0;
   }
 
   private backup(): string {
-    return JSON.stringify({
-      key: DB_API_KEY,
-      data: this.reportes,
-    });
+    return JSON.stringify({ key: DB_API_KEY });
   }
+}
+
+function toEntity(row: any): Reporte {
+  const reporte = new Reporte();
+
+  reporte.idReporte = row.id_reporte;
+  reporte.idUsuario = row.id_usuario;
+  reporte.idSubcategoria = row.id_subcategoria;
+  reporte.idEstado = row.id_estado;
+  reporte.descripcion = row.descripcion;
+  reporte.plataforma = row.plataforma;
+  reporte.entidadReportada = row.entidad_reportada;
+  reporte.publicacionAnonima = Boolean(row.publicacion_anonima);
+  reporte.fechaRegistro = row.fecha_registro;
+
+  return reporte;
 }
