@@ -4,4 +4,5 @@ export class User {
   correoElectronico: string | undefined;
   contrasenaHash: string | undefined;
   fechaCreacion: Date | undefined;
+  idRol: number | undefined;
 }

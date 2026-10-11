@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsString, IsInt, IsIn } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -6,4 +6,8 @@ export class LoginDto {
 
   @IsString()
   contrasena: string | undefined;
+
+  @IsInt()
+  @IsIn([1, 2, 3])
+  idRolSolicitado: number | undefined;
 }

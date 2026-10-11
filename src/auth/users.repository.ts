@@ -8,7 +8,8 @@ const COLUMNS = `
   nombre_usuario,
   correo_electronico,
   contrasena_hash,
-  fecha_creacion
+  fecha_creacion,
+  id_rol
 `;
 
 @Injectable()
@@ -57,6 +58,7 @@ function toEntity(row: any): User {
   user.correoElectronico = row.correo_electronico;
   user.contrasenaHash = row.contrasena_hash;
   user.fechaCreacion = row.fecha_creacion;
+  user.idRol = row.id_rol;
 
   return user;
 }

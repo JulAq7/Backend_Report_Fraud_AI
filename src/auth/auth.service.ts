@@ -36,7 +36,11 @@ export class AuthService {
     if (user.contrasenaHash !== hash(dto.contrasena!)) {
       throw new UnauthorizedException('Contraseña incorrecta');
     }
-    const claims = {sub: String(user.idUsuario!), email: user.correoElectronico!, };
+    if (user.idRol !== dto.idRolSolicitado) {
+      throw new UnauthorizedException('Permiso denegado');
+    }
+
+    const claims = {sub: String(user.idUsuario!), email: user.correoElectronico!, idRol: user.idRol!};
     const accessToken = sign({ ...claims, type: 'access' }, ACCESS_TTL,);
     const refreshToken = sign({ ...claims, type: 'refresh' }, REFRESH_TTL,);
     console.log('Login de ' + user.correoElectronico + ': ' + accessToken, );
@@ -50,7 +54,7 @@ export class AuthService {
     }
 
     const accessToken = sign(
-      { sub: payload.sub, email: payload.email, type: 'access', },
+      { sub: payload.sub, email: payload.email, idRol: payload.idRol, type: 'access', },
       ACCESS_TTL,
     );
 

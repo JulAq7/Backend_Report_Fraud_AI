@@ -10,6 +10,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt';
 import { ReportesService } from './reportes.service';
@@ -18,11 +20,12 @@ import { UpdateReporteDto } from './dto/update-reporte.dto';
 import { ReporteResponseDto } from './dto/reporte-response.dto';
 
 @Controller('reportes')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 export class ReportesController {
   constructor(private readonly service: ReportesService) {}
 
   @Post()
+  @Roles(1)
   create(
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateReporteDto,
@@ -38,21 +41,36 @@ export class ReportesController {
   }
 
   @Get(':id')
+  @Roles(1, 2, 3)
   findOne(@Param('id') id: string): Promise<ReporteResponseDto> {
     return this.service.findOne(Number(id));
   }
 
   @Patch(':id')
+  @Roles(1, 2)
   update(
-    @Param('id') id: string,
-    @Body() dto: UpdateReporteDto,
-  ): Promise<ReporteResponseDto> {
-    return this.service.update(Number(id), dto);
-  }
+  @Param('id') id: string,
+  @CurrentUser() user: JwtPayload,
+  @Body() dto: UpdateReporteDto,): Promise<ReporteResponseDto> {
+  return this.service.update(
+    Number(id),
+    Number(user.sub),
+    user.idRol,
+    dto,
+  );
+}
 
   @Delete(':id')
+  @Roles(1, 2)
   @HttpCode(204)
-  remove(@Param('id') id: string): Promise<void> {
-    return this.service.remove(Number(id));
-  }
+  remove(
+  @Param('id') id: string,
+  @CurrentUser() user: JwtPayload,): Promise<void> {
+  return this.service.remove(
+    Number(id),
+    Number(user.sub),
+    user.idRol,
+  );
+}
+
 }

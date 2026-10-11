@@ -6,7 +6,7 @@ export const DB_POOL = 'DB_POOL';
 
 // Conexión a la base de datos de ReportFraudAI
 const DATABASE_URL =
-  'mysql://root:PASSWORD@localhost:3306/ReportFraudAI';
+  'mysql://root:CONTRASEÑA@localhost:3306/ReportFraudAI';
 
 @Module({
   providers: [
