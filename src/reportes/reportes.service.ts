@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ReportesRepository } from './reportes.repository';
 import { ReporteResponseDto } from './dto/reporte-response.dto';
 import { UpdateReporteDto } from './dto/update-reporte.dto';
@@ -59,36 +59,48 @@ export class ReportesService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
-  async update(
-    id: number,
-    changes: UpdateReporteDto,
-  ): Promise<ReporteResponseDto> {
-    const reporte = await this.repository.findById(id);
+  async update(id: number, idUsuario: number, idRol: number,changes: UpdateReporteDto,): 
+  Promise<ReporteResponseDto> {
+  const reporte = await this.repository.findById(id);
 
-    if (!reporte) {
-      throw new NotFoundException(
-        'Reporte ' + id + ' no encontrado',
-      );
-    }
-
-    const updated = (
-      await this.repository.update(id, changes)
-    )!;
-
-    return ReporteResponseDto.fromEntity(updated);
+  if (!reporte) {
+    throw new NotFoundException(
+      'Reporte ' + id + ' no encontrado',
+    );
   }
 
-  async remove(id: number): Promise<void> {
-    const reporte = await this.repository.findById(id);
-
-    if (!reporte) {
-      throw new NotFoundException(
-        'Reporte ' + id + ' no encontrado',
-      );
-    }
-
-    await this.repository.delete(id);
+  // Solo el propietario o el Administrador pueden actualizar
+  if (idRol !== 2 && reporte.idUsuario !== idUsuario) {
+    throw new ForbiddenException(
+      'No tienes permiso para actualizar este reporte',
+    );
   }
+
+  const updated = (
+    await this.repository.update(id, changes)
+  )!;
+
+  return ReporteResponseDto.fromEntity(updated);
+}
+
+  async remove(id: number,idUsuario: number,idRol: number): Promise<void> {
+  const reporte = await this.repository.findById(id);
+
+  if (!reporte) {
+    throw new NotFoundException(
+      'Reporte ' + id + ' no encontrado',
+    );
+  }
+
+  // Solo el propietario o el Administrador pueden eliminar
+  if (idRol !== 2 && reporte.idUsuario !== idUsuario) {
+    throw new ForbiddenException(
+      'No tienes permiso para eliminar este reporte',
+    );
+  }
+
+  await this.repository.delete(id);
+}
 
   private checkReporte(data: any): boolean {
     if (data) {

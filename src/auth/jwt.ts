@@ -6,6 +6,7 @@ const SECRET = 'reportfraud-secret-2026';
 export interface JwtPayload {
   sub: string;
   email: string;
+  idRol: number;  
   type: 'access' | 'refresh';
   iat: number;
   exp: number;
