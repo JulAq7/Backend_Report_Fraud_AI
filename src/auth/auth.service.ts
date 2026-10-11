@@ -1,0 +1,63 @@
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
+import { RegisterDto } from './dto/register.dto';
+import { sign, verify } from './jwt';
+import { UsersRepository } from './users.repository';
+
+const ACCESS_TTL = 15 * 60; // 15 minutos
+const REFRESH_TTL = 7 * 24 * 60 * 60; // 7 días
+
+@Injectable()
+export class AuthService {
+  constructor(private readonly users: UsersRepository) {}
+
+  async register(dto: RegisterDto,): Promise<{ idUsuario: number; correoElectronico: string }> {
+    if (await this.users.findByEmail(dto.correoElectronico!)) {
+      throw new ConflictException('El correo ya está registrado');
+    }
+    const user = await this.users.save(dto.nombreUsuario!, dto.correoElectronico!,
+      hash(dto.contrasena!),);
+    return { idUsuario: user.idUsuario!, correoElectronico: user.correoElectronico!,};
+  }
+
+  async login(
+    dto: LoginDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const user = await this.users.findByEmail(dto.correoElectronico!);
+    if (!user) {
+      throw new UnauthorizedException('El usuario no existe');
+    }
+    if (user.contrasenaHash !== hash(dto.contrasena!)) {
+      throw new UnauthorizedException('Contraseña incorrecta');
+    }
+    const claims = {sub: String(user.idUsuario!), email: user.correoElectronico!, };
+    const accessToken = sign({ ...claims, type: 'access' }, ACCESS_TTL,);
+    const refreshToken = sign({ ...claims, type: 'refresh' }, REFRESH_TTL,);
+    console.log('Login de ' + user.correoElectronico + ': ' + accessToken, );
+    return { accessToken, refreshToken };
+  }
+
+  refresh(dto: RefreshDto): { accessToken: string } {
+    const payload = verify(dto.refreshToken!);
+    if (!payload || payload.type !== 'refresh') {
+      throw new UnauthorizedException('Refresh token inválido');
+    }
+
+    const accessToken = sign(
+      { sub: payload.sub, email: payload.email, type: 'access', },
+      ACCESS_TTL,
+    );
+
+    return { accessToken };
+  }
+}
+
+function hash(contrasena: string): string {
+  return createHash('sha256').update(contrasena).digest('hex');
+}
