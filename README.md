@@ -1,98 +1,231 @@
+# ReportFraud AI — Backend
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <a href="https://nestjs.com/" target="_blank">
+    <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="NestJS Logo" />
+  </a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Descripción
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**ReportFraud AI** es un proyecto orientado al registro, consulta y gestión de reportes relacionados con posibles fraudes digitales.
 
-## Description
+Este repositorio contiene el **backend del sistema**, desarrollado con NestJS y TypeScript, que proporciona una API REST para la autenticación de usuarios, administración de reportes y control de acceso mediante roles.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+La información se almacena en una base de datos MySQL.
 
-## Project setup
+## Tecnologías utilizadas
 
-```bash
-$ npm install
-```
+- **Node.js:** entorno de ejecución.
+- **NestJS:** framework para el desarrollo del backend.
+- **TypeScript:** lenguaje de programación.
+- **MySQL:** base de datos relacional.
+- **mysql2/promise:** conexión y consultas a MySQL.
+- **JWT:** autenticación mediante tokens.
+- **class-validator:** validación de los datos recibidos por la API.
 
-## Compile and run the project
+## Requisitos previos
 
-```bash
-# development
-$ npm run start
+Para ejecutar el proyecto se necesita:
 
-# watch mode
-$ npm run start:dev
+- Node.js y npm instalados.
+- MySQL Server instalado y en ejecución.
+- Base de datos `ReportFraudAI` con el esquema correspondiente.
+- Credenciales válidas de acceso a MySQL.
 
-# production mode
-$ npm run start:prod
-```
+## Instalación
 
-## Run tests
+### 1. Clonar el repositorio
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone <URL_DEL_REPOSITORIO>
+cd <CARPETA_DEL_PROYECTO>
 ```
 
-## Deployment
+Sustituir los valores entre los signos de menor y mayor por la URL y el nombre correspondientes.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 2. Instalar dependencias
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 3. Configurar la base de datos
 
-## Resources
+El backend utiliza el archivo `src/database/database.module.ts` para administrar la conexión a MySQL mediante un pool de conexiones.
 
-Check out a few resources that may come in handy when working with NestJS:
+La configuración local contempla:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+| Parámetro | Valor |
+|---|---|
+| Servidor | localhost |
+| Puerto | 3306 |
+| Base de datos | ReportFraudAI |
+| Motor | MySQL |
 
-## Support
+Es necesario contar con las tablas y relaciones de la base de datos del proyecto.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Ejecución del backend
 
-## Stay in touch
+Para iniciar el servidor en modo desarrollo:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npm run start:dev
+```
 
-## License
+Otros comandos disponibles:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+# Ejecución normal
+npm run start
+
+# Ejecución en modo producción
+npm run start:prod
+```
+
+
+## Funcionalidades del backend
+
+### Autenticación
+
+El sistema cuenta con mecanismos de autenticación mediante JWT, que permiten:
+
+- Iniciar sesión.
+- Generar tokens de acceso y actualización.
+- Verificar la autenticidad de las solicitudes.
+- Identificar el rol asociado al usuario.
+
+### Control de acceso por roles
+
+El backend contempla tres roles principales:
+
+| Rol | Permisos |
+|---|---|
+| Usuario reportante | Crear reportes, consultar reportes y modificar o eliminar los propios. |
+| Administrador | Consultar, modificar y eliminar reportes. |
+| Policía cibernética | Consultar reportes. |
+
+La autorización se implementa mediante `AuthGuard`, `RolesGuard` y el decorador `@Roles()`.
+
+### Gestión de reportes
+
+El backend permite realizar operaciones de creación, consulta, actualización y eliminación de reportes.
+
+Los reportes incluyen información relacionada con el incidente, como:
+
+- Descripción.
+- Plataforma involucrada.
+- Entidad reportada.
+- Subcategoría.
+- Estado del reporte.
+- Opción de publicación anónima.
+
+La publicación anónima está destinada a ocultar la identidad del autor ante otros usuarios, sin convertir el reporte en privado. La implementación completa de esta protección está pendiente de revisión.
+
+## Endpoints principales
+
+### Reportes
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/reportes` | Crear un reporte. |
+| GET | `/reportes` | Consultar reportes del usuario autenticado en la implementación actual. |
+| GET | `/reportes/:id` | Consultar un reporte por su identificador. |
+| PATCH | `/reportes/:id` | Actualizar un reporte según los permisos. |
+| DELETE | `/reportes/:id` | Eliminar un reporte según los permisos. |
+
+Las rutas de reportes están protegidas mediante autenticación JWT.
+
+La documentación detallada de los endpoints de autenticación se agregará posteriormente.
+
+## Estructura principal del proyecto
+
+```text
+src/
+├── auth/
+│   ├── dto/
+│   ├── entities/
+│   ├── auth.service.ts
+│   ├── auth.guard.ts
+│   ├── roles.decorator.ts
+│   └── roles.guard.ts
+│
+├── database/
+│   └── database.module.ts
+│
+├── reportes/
+│   ├── dto/
+│   ├── entities/
+│   ├── reportes.controller.ts
+│   ├── reportes.module.ts
+│   ├── reportes.repository.ts
+│   └── reportes.service.ts
+│
+├── app.module.ts
+└── main.ts
+```
+
+## Seguridad
+
+El backend incorpora los siguientes mecanismos:
+
+- Autenticación mediante JWT.
+- Protección de endpoints mediante guards.
+- Control de acceso basado en roles.
+- Verificación de propiedad para modificar y eliminar reportes.
+- Validación de datos mediante DTO.
+- Rechazo de propiedades no permitidas en las solicitudes.
+
+Estos mecanismos requieren pruebas adicionales para verificar su correcto funcionamiento y detectar posibles vulnerabilidades.
+
+## Pruebas
+
+El proyecto incluye comandos para ejecutar pruebas con las herramientas configuradas por NestJS.
+
+```bash
+# Pruebas unitarias
+npm run test
+
+# Pruebas extremo a extremo
+npm run test:e2e
+
+# Cobertura de pruebas
+npm run test:cov
+```
+
+Las pruebas funcionales y de seguridad completas, así como sus evidencias, se documentarán en una etapa posterior.
+
+## Estado del proyecto
+
+El backend se encuentra en desarrollo.
+
+### Funcionalidades implementadas
+
+- Conexión con MySQL.
+- Autenticación mediante JWT.
+- Manejo de roles.
+- Protección de endpoints.
+- Operaciones principales de reportes.
+- Validación de solicitudes.
+
+### Funcionalidades pendientes
+
+- Completar la consulta comunitaria de reportes.
+- Revisar la protección de identidad de reportes anónimos.
+- Migrar las credenciales de MySQL a variables de entorno.
+- Fortalecer la seguridad de las consultas SQL.
+- Completar la documentación de la API.
+- Realizar pruebas funcionales y de seguridad.
+- Registrar resultados y evidencias.
+
+## Documentación adicional
+
+La documentación técnica del proyecto se ampliará conforme avance el desarrollo del backend.
+
+Se contempla incluir información sobre la arquitectura, base de datos, autenticación, autorización y pruebas de seguridad.
+
+## Referencias
+
+- [Documentación oficial de NestJS](https://docs.nestjs.com/)
+- [Documentación oficial de Node.js](https://nodejs.org/)
+- [Documentación oficial de MySQL](https://dev.mysql.com/doc/)
