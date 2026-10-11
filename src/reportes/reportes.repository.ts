@@ -14,9 +14,12 @@ const COLUMNS = `
 export class ReportesRepository {
   constructor(@Inject(DB_POOL) private readonly pool: Pool) {}
 
-  async findAll(): Promise<Reporte[]> {
+  async findAll(idUsuario: number): Promise<Reporte[]> {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte ORDER BY fecha_registro`,
+      `SELECT ${COLUMNS}
+      FROM reporte
+      WHERE id_usuario = '${idUsuario}'
+      ORDER BY fecha_registro`,
     );
 
     return rows.map(toEntity);

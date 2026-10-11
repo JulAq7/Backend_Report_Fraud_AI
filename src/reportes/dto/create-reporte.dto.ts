@@ -7,9 +7,6 @@ import {
 
 export class CreateReporteDto {
   @IsInt()
-  idUsuario: number;
-
-  @IsInt()
   idSubcategoria: number;
 
   @IsString()

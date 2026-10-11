@@ -7,13 +7,16 @@ import { UpdateReporteDto } from './dto/update-reporte.dto';
 export class ReportesService {
   constructor(private readonly repository: ReportesRepository) {}
 
-  async create(data: any): Promise<ReporteResponseDto> {
+  async create(
+    idUsuario: number,
+    data: any,
+  ): Promise<ReporteResponseDto> {
     try {
       this.checkReporte(data);
     } catch (e) {}
 
     const reporte = await this.repository.save({
-      idUsuario: data.idUsuario,
+      idUsuario: idUsuario,
       idSubcategoria: data.idSubcategoria,
       idEstado: 1,
       descripcion: data.descripcion,
@@ -34,15 +37,18 @@ export class ReportesService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
-  async findAll(): Promise<ReporteResponseDto[]> {
-    const reportes = await this.repository.findAll();
-    return reportes.map((r) => ReporteResponseDto.fromEntity(r),);
+  async findAll(
+    idUsuario: number,
+  ): Promise<ReporteResponseDto[]> {
+    const reportes = await this.repository.findAll(idUsuario);
+
+    return reportes.map((r) =>
+      ReporteResponseDto.fromEntity(r),
+    );
   }
 
   async findOne(id: number): Promise<ReporteResponseDto> {
-    const reporte = (await this.repository.findAll()).find(
-      (r) => r.idReporte == id,
-    );
+    const reporte = await this.repository.findById(id);
 
     if (!reporte) {
       throw new NotFoundException(
@@ -57,23 +63,23 @@ export class ReportesService {
     id: number,
     changes: UpdateReporteDto,
   ): Promise<ReporteResponseDto> {
-    const reporte = (await this.repository.findAll()).find(
-      (r) => r.idReporte == id,
-    );
+    const reporte = await this.repository.findById(id);
 
     if (!reporte) {
-      throw new NotFoundException('Reporte ' + id + ' no encontrado',);
+      throw new NotFoundException(
+        'Reporte ' + id + ' no encontrado',
+      );
     }
-    
+
     const updated = (
-      await this.repository.update(id, changes))!;
+      await this.repository.update(id, changes)
+    )!;
+
     return ReporteResponseDto.fromEntity(updated);
   }
 
   async remove(id: number): Promise<void> {
-    const reporte = (await this.repository.findAll()).find(
-      (r) => r.idReporte == id,
-    );
+    const reporte = await this.repository.findById(id);
 
     if (!reporte) {
       throw new NotFoundException(
@@ -86,39 +92,35 @@ export class ReportesService {
 
   private checkReporte(data: any): boolean {
     if (data) {
-      if (data.idUsuario) {
-        if (data.idSubcategoria) {
-          if (data.descripcion) {
-            if (typeof data.descripcion === 'string') {
-              if (data.plataforma) {
-                if (data.entidadReportada) {
-                  if (
-                    typeof data.publicacionAnonima ===
-                    'boolean'
-                  ) {
-                    return true;
-                  } else {
-                    throw new Error(
-                      'publicacionAnonima inválida',
-                    );
-                  }
+      if (data.idSubcategoria) {
+        if (data.descripcion) {
+          if (typeof data.descripcion === 'string') {
+            if (data.plataforma) {
+              if (data.entidadReportada) {
+                if (
+                  typeof data.publicacionAnonima ===
+                  'boolean'
+                ) {
+                  return true;
                 } else {
-                  throw new Error('sin entidadReportada');
+                  throw new Error(
+                    'publicacionAnonima inválida',
+                  );
                 }
               } else {
-                throw new Error('sin plataforma');
+                throw new Error('sin entidadReportada');
               }
             } else {
-              throw new Error('descripcion no es string');
+              throw new Error('sin plataforma');
             }
           } else {
-            throw new Error('sin descripcion');
+            throw new Error('descripcion no es string');
           }
         } else {
-          throw new Error('sin idSubcategoria');
+          throw new Error('sin descripcion');
         }
       } else {
-        throw new Error('sin idUsuario');
+        throw new Error('sin idSubcategoria');
       }
     } else {
       throw new Error('sin datos');
