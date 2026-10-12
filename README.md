@@ -126,17 +126,23 @@ La publicación anónima está destinada a ocultar la identidad del autor ante o
 
 ### Reportes
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| POST | `/reportes` | Crear un reporte. |
-| GET | `/reportes` | Consultar reportes del usuario autenticado en la implementación actual. |
-| GET | `/reportes/:id` | Consultar un reporte por su identificador. |
-| PATCH | `/reportes/:id` | Actualizar un reporte según los permisos. |
-| DELETE | `/reportes/:id` | Eliminar un reporte según los permisos. |
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| POST | `/reportes` | Bearer | Crear un reporte. |
+| GET | `/reportes` | Bearer | Consultar reportes del usuario autenticado. |
+| GET | `/reportes/:id` | Bearer | Consultar un reporte por su identificador. |
+| PATCH | `/reportes/:id` | Bearer | Actualizar un reporte según los permisos. |
+| DELETE | `/reportes/:id` | Bearer | Eliminar un reporte según los permisos. |
 
 Las rutas de reportes están protegidas mediante autenticación JWT.
 
-La documentación detallada de los endpoints de autenticación se agregará posteriormente.
+### Autenticación
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/auth/register` | Registrar un nuevo usuario. |
+| POST | `/auth/login` | Iniciar sesión y obtener `accessToken` y `refreshToken`. |
+| POST | `/auth/refresh` | Generar un nuevo `accessToken` a partir del `refreshToken`. |
 
 ## Estructura principal del proyecto
 

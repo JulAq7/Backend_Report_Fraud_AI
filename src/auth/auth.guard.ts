@@ -6,6 +6,18 @@ import {
 } from '@nestjs/common';
 import { verify } from './jwt';
 
+
+/**
+ * Protege rutas con un JWT de acceso.
+ *
+ * Lee `Authorization: Bearer <token>`, verifica firma y expiración con
+ * {@link verify} y, si todo es válido, guarda el payload en `req.user`
+ * para que `@CurrentUser()` pueda leerlo.
+ *
+ * Rechaza la petición con 401 antes de llegar al controller si falta el
+ * token, es inválido, está expirado o no es de tipo `access`.
+ */
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
