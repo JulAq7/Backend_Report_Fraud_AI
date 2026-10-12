@@ -3,9 +3,26 @@ import { ReportesRepository } from './reportes.repository';
 import { ReporteResponseDto } from './dto/reporte-response.dto';
 import { UpdateReporteDto } from './dto/update-reporte.dto';
 
+
+
+/**
+ * Reglas de negocio de los reportes.
+ *
+ * No sabe de HTTP ni de SQL: recibe DTOs ya validados, habla con el
+ * repository y regresa `ReporteResponseDto`. Los errores de negocio se
+ * expresan como excepciones de Nest para que el controller no tenga que
+ * traducirlas.
+ */
+
 @Injectable()
 export class ReportesService {
   constructor(private readonly repository: ReportesRepository) {}
+    /**
+   * Crea un reporte.
+   * @param idUsuario - Id del usuario autenticado obtenido desde el JWT.
+   * @param data - Campos del reporte, ya validados por el `ValidationPipe`.
+   * @returns El reporte guardado, con `idReporte` y `fechaRegistro` asignados por la BD.
+   */
 
   async create(
     idUsuario: number,
@@ -37,6 +54,11 @@ export class ReportesService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
+  /**
+  * Lista los reportes del usuario autenticado.
+  * @param idUsuario - Id del usuario cuyos reportes se van a consultar.
+  * @returns Los reportes asociados a ese usuario.
+  */
   async findAll(
     idUsuario: number,
   ): Promise<ReporteResponseDto[]> {
@@ -47,6 +69,13 @@ export class ReportesService {
     );
   }
 
+
+  /**
+  * Busca un reporte por id.
+  * @param id - Id numérico del reporte.
+  * @returns El reporte encontrado.
+  * @throws NotFoundException si no existe un reporte con ese id.
+  */
   async findOne(id: number): Promise<ReporteResponseDto> {
     const reporte = await this.repository.findById(id);
 
@@ -59,6 +88,17 @@ export class ReportesService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
+
+  /**
+ * Actualiza un reporte.
+ * @param id - Id numérico del reporte.
+ * @param idUsuario - Id del usuario autenticado.
+ * @param idRol - Rol del usuario autenticado.
+ * @param changes - Campos del reporte que se desean actualizar.
+ * @returns El reporte actualizado.
+ * @throws NotFoundException si no existe un reporte con ese id.
+ * @throws ForbiddenException si el usuario no es propietario ni administrador.
+ */
   async update(id: number, idUsuario: number, idRol: number,changes: UpdateReporteDto,): 
   Promise<ReporteResponseDto> {
   const reporte = await this.repository.findById(id);
@@ -83,6 +123,15 @@ export class ReportesService {
   return ReporteResponseDto.fromEntity(updated);
 }
 
+
+  /**
+  * Elimina un reporte.
+  * @param id - Id numérico del reporte.
+  * @param idUsuario - Id del usuario autenticado.
+  * @param idRol - Rol del usuario autenticado.
+  * @throws NotFoundException si no existe un reporte con ese id.
+  * @throws ForbiddenException si el usuario no es propietario ni administrador.
+  */
   async remove(id: number,idUsuario: number,idRol: number): Promise<void> {
   const reporte = await this.repository.findById(id);
 
