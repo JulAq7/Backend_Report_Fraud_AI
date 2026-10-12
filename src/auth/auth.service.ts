@@ -43,7 +43,7 @@ export class AuthService {
     const claims = {sub: String(user.idUsuario!), email: user.correoElectronico!, idRol: user.idRol!};
     const accessToken = sign({ ...claims, type: 'access' }, ACCESS_TTL,);
     const refreshToken = sign({ ...claims, type: 'refresh' }, REFRESH_TTL,);
-    console.log('Login de ' + user.correoElectronico + ': ' + accessToken, );
+    
     return { accessToken, refreshToken };
   }
 

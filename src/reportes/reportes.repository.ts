@@ -26,12 +26,13 @@ export class ReportesRepository {
   }
 
   async findById(id: number): Promise<Reporte | undefined> {
-    const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS} FROM reporte WHERE id_reporte = '${id}'`,
-    );
+  const [rows] = await this.pool.execute<RowDataPacket[]>(
+    `SELECT ${COLUMNS} FROM reporte WHERE id_reporte = ?`,
+    [id],
+  );
 
-    return rows[0] && toEntity(rows[0]);
-  }
+  return rows[0] && toEntity(rows[0]);
+}
 
   async save(
     reporte: Omit<Reporte, 'idReporte' | 'fechaRegistro'>,): Promise<Reporte> {
