@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, BadRequestException} from '@nestjs/common';
 import { ReportesRepository } from './reportes.repository';
 import { ReporteResponseDto } from './dto/reporte-response.dto';
 import { UpdateReporteDto } from './dto/update-reporte.dto';
@@ -69,6 +69,52 @@ export class ReportesService {
     );
   }
 
+  async findPendientes(): Promise<ReporteResponseDto[]> {
+    const reportes = await this.repository.findPendientes();
+
+    return reportes.map((r) =>
+      ReporteResponseDto.fromEntity(r),
+    );
+  }
+
+
+  /**
+   * Obtiene el resumen general de reportes por estado.
+   * @returns Total de reportes, pendientes, aprobados y rechazados.
+   */
+  async getResumen(): Promise<{
+    total: number;
+    pendientes: number;
+    aprobados: number;
+    rechazados: number;
+  }> {
+    return this.repository.getResumen();
+  }
+
+
+  /**
+   * Obtiene las estadísticas generales de los reportes.
+   * @returns Estadísticas por estado, sexo, rango de edad y plataforma.
+   */
+  async getEstadisticas() {
+    const resumen = await this.repository.getResumen();
+    const estadisticas =
+      await this.repository.getEstadisticas();
+
+    return {
+      totalReportes: resumen.total,
+
+      porEstado: {
+        enRevision: resumen.pendientes,
+        aprobados: resumen.aprobados,
+        rechazados: resumen.rechazados,
+      },
+
+      porSexo: estadisticas.porSexo,
+      porRangoEdad: estadisticas.porRangoEdad,
+      porPlataforma: estadisticas.porPlataforma,
+    };
+  }
 
   /**
   * Busca un reporte por id.
@@ -88,6 +134,32 @@ export class ReportesService {
     return ReporteResponseDto.fromEntity(reporte);
   }
 
+
+  async updateEstado(
+    id: number,
+    idEstado: number,
+  ): Promise<ReporteResponseDto> {
+    const reporte = await this.repository.findById(id);
+
+    if (!reporte) {
+      throw new NotFoundException(
+        'Reporte ' + id + ' no encontrado',
+      );
+    }
+
+    if (![1, 2, 3].includes(idEstado)) {
+      throw new BadRequestException(
+        'El estado debe ser 1, 2 o 3',
+      );
+    }
+
+    const updated = await this.repository.updateEstado(
+      id,
+      idEstado,
+    );
+
+    return ReporteResponseDto.fromEntity(updated!);
+  }
 
   /**
  * Actualiza un reporte.

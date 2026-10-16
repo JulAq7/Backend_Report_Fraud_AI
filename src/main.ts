@@ -27,7 +27,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('docs', app, document);
-
+  //ESTO SE CAMBIO 
+  app.enableCors();
   await app.listen(3000);
 }
 
