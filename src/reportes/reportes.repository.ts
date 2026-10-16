@@ -25,6 +25,130 @@ export class ReportesRepository {
     return rows.map(toEntity);
   }
 
+  async findPendientes(): Promise<Reporte[]> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT ${COLUMNS}
+      FROM reporte
+      WHERE id_estado = 1
+      ORDER BY fecha_registro DESC`,
+    );
+
+    return rows.map(toEntity);
+  }
+
+  async getResumen(): Promise<{
+    total: number;
+    pendientes: number;
+    aprobados: number;
+    rechazados: number;
+  }> {
+    const [rows] = await this.pool.query<RowDataPacket[]>(
+      `SELECT
+        COUNT(*) AS total,
+        COALESCE(SUM(CASE WHEN id_estado = 1 THEN 1 ELSE 0 END), 0) AS pendientes,
+        COALESCE(SUM(CASE WHEN id_estado = 2 THEN 1 ELSE 0 END), 0) AS aprobados,
+        COALESCE(SUM(CASE WHEN id_estado = 3 THEN 1 ELSE 0 END), 0) AS rechazados
+      FROM reporte`,
+    );
+
+    const resumen = rows[0];
+
+    return {
+      total: Number(resumen.total),
+      pendientes: Number(resumen.pendientes),
+      aprobados: Number(resumen.aprobados),
+      rechazados: Number(resumen.rechazados),
+    };
+  }
+
+  async getEstadisticas(): Promise<{
+    porSexo: { sexo: string; cantidad: number }[];
+    porRangoEdad: { rango: string; cantidad: number }[];
+    porPlataforma: { plataforma: string; cantidad: number }[];
+  }> {
+    const [sexoRows] =
+      await this.pool.query<RowDataPacket[]>(
+        `SELECT
+          COALESCE(NULLIF(u.sexo, ''), 'No especificado') AS sexo,
+          COUNT(*) AS cantidad
+        FROM reporte r
+        INNER JOIN usuario u
+          ON r.id_usuario = u.id_usuario
+        GROUP BY sexo
+        ORDER BY cantidad DESC`,
+      );
+
+    const [edadRows] =
+      await this.pool.query<RowDataPacket[]>(
+        `SELECT
+          CASE
+            WHEN u.fecha_nacimiento IS NULL
+              THEN 'No especificado'
+            WHEN TIMESTAMPDIFF(
+              YEAR,
+              u.fecha_nacimiento,
+              CURDATE()
+            ) < 18
+              THEN 'Menor de 18'
+            WHEN TIMESTAMPDIFF(
+              YEAR,
+              u.fecha_nacimiento,
+              CURDATE()
+            ) BETWEEN 18 AND 29
+              THEN '18-29'
+            WHEN TIMESTAMPDIFF(
+              YEAR,
+              u.fecha_nacimiento,
+              CURDATE()
+            ) BETWEEN 30 AND 44
+              THEN '30-44'
+            WHEN TIMESTAMPDIFF(
+              YEAR,
+              u.fecha_nacimiento,
+              CURDATE()
+            ) BETWEEN 45 AND 59
+              THEN '45-59'
+            ELSE '60+'
+          END AS rango,
+          COUNT(*) AS cantidad
+        FROM reporte r
+        INNER JOIN usuario u
+          ON r.id_usuario = u.id_usuario
+        GROUP BY rango
+        ORDER BY cantidad DESC`,
+      );
+
+    const [plataformaRows] =
+      await this.pool.query<RowDataPacket[]>(
+        `SELECT
+          COALESCE(
+            NULLIF(plataforma, ''),
+            'No especificado'
+          ) AS plataforma,
+          COUNT(*) AS cantidad
+        FROM reporte
+        GROUP BY plataforma
+        ORDER BY cantidad DESC`,
+      );
+
+    return {
+      porSexo: sexoRows.map((row) => ({
+        sexo: String(row.sexo),
+        cantidad: Number(row.cantidad),
+      })),
+
+      porRangoEdad: edadRows.map((row) => ({
+        rango: String(row.rango),
+        cantidad: Number(row.cantidad),
+      })),
+
+      porPlataforma: plataformaRows.map((row) => ({
+        plataforma: String(row.plataforma),
+        cantidad: Number(row.cantidad),
+      })),
+    };
+  }
+
   async findById(id: number): Promise<Reporte | undefined> {
   const [rows] = await this.pool.execute<RowDataPacket[]>(
     `SELECT ${COLUMNS} FROM reporte WHERE id_reporte = ?`,
@@ -99,6 +223,21 @@ export class ReportesRepository {
     return this.findById(id);
   }
 
+
+
+  async updateEstado(
+    id: number,
+    idEstado: number,
+  ): Promise<Reporte | undefined> {
+    await this.pool.query(
+      `UPDATE reporte
+      SET id_estado = '${idEstado}'
+      WHERE id_reporte = '${id}'`,
+    );
+    return this.findById(id);
+  }
+
+  
   async delete(id: number): Promise<boolean> {
     const [result] = await this.pool.query<ResultSetHeader>(
       `DELETE FROM reporte WHERE id_reporte = '${id}'`,

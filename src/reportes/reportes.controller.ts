@@ -15,7 +15,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-
+import { UpdateEstadoDto } from './dto/update-estado.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -78,6 +78,66 @@ export class ReportesController {
     return this.service.findAll(Number(user.sub));
   }
 
+  @Get('pendientes')
+  @Roles(2)
+  findPendientes(): Promise<ReporteResponseDto[]> {
+    return this.service.findPendientes();
+  }  
+
+  @Get('resumen')
+  @Roles(1, 2, 3)
+  @ApiOperation({
+    summary: 'Consultar el resumen general de reportes',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Total de reportes agrupados por estado',
+    schema: {
+      type: 'object',
+      properties: {
+        total: {
+          type: 'number',
+          example: 15,
+        },
+        pendientes: {
+          type: 'number',
+          example: 8,
+        },
+        aprobados: {
+          type: 'number',
+          example: 5,
+        },
+        rechazados: {
+          type: 'number',
+          example: 2,
+        },
+      },
+    },
+  })
+  getResumen(): Promise<{
+    total: number;
+    pendientes: number;
+    aprobados: number;
+    rechazados: number;
+  }> {
+    return this.service.getResumen();
+  }
+
+  @Get('estadisticas')
+  @Roles(1, 2, 3)
+  @ApiOperation({
+    summary: 'Consultar estadísticas generales de reportes',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Estadísticas de reportes por estado, sexo, edad y plataforma',
+  })
+  getEstadisticas() {
+    return this.service.getEstadisticas();
+  }
+
   @Get(':id')
   @Roles(1, 2, 3)
   @ApiOperation({
@@ -100,6 +160,41 @@ export class ReportesController {
     @Param('id') id: string,
   ): Promise<ReporteResponseDto> {
     return this.service.findOne(Number(id));
+  }
+
+
+
+  @Patch(':id/estado')
+  @Roles(2)
+  @ApiOperation({
+    summary: 'Actualizar el estado de un reporte',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estado del reporte actualizado',
+    type: ReporteResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Estado inválido',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Solo el administrador puede cambiar el estado del reporte',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No existe un reporte con ese id',
+  })
+  updateEstado(
+    @Param('id') id: string,
+    @Body() body: UpdateEstadoDto,
+  ): Promise<ReporteResponseDto> {
+    return this.service.updateEstado(
+      Number(id),
+      body.idEstado!,
+    );
   }
 
   @Patch(':id')

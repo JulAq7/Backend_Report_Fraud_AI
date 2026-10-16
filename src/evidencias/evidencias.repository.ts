@@ -44,4 +44,25 @@ async buscarPorNombre(
   return rows[0];
 }
 
+
+async buscarPorReporte(
+  idReporte: number,
+): Promise<RowDataPacket[]> {
+  const [rows] = await this.pool.execute<RowDataPacket[]>(
+    `SELECT
+       id_evidencia,
+       id_reporte,
+       nombre_archivo,
+       url_archivo,
+       tipo_archivo,
+       fecha_carga
+     FROM evidencia
+     WHERE id_reporte = ?
+     ORDER BY fecha_carga`,
+    [idReporte],
+  );
+
+  return rows;
+}
+
 }

@@ -1,4 +1,3 @@
-
 import {
   BadRequestException,
   Controller,
@@ -32,6 +31,8 @@ import { basename, extname, join } from 'node:path';
 import { AuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { JwtPayload } from '../auth/jwt';
 
 import { EvidenciasUploadGuard } from './evidencias-upload.guard';
 import { EvidenciasService } from './evidencias.service';
@@ -45,7 +46,6 @@ export class EvidenciasController {
     private readonly evidenciasService: EvidenciasService,
   ) {}
 
-  
   @Post('reportes/:idReporte')
   @Roles(1)
   @UseGuards(EvidenciasUploadGuard)
@@ -54,8 +54,12 @@ export class EvidenciasController {
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, callback) => {
-          const extension = extname(file.originalname).toLowerCase();
-          const nombreUnico = `${randomUUID()}${extension}`;
+          const extension = extname(
+            file.originalname,
+          ).toLowerCase();
+
+          const nombreUnico =
+            `${randomUUID()}${extension}`;
 
           callback(null, nombreUnico);
         },
@@ -64,26 +68,36 @@ export class EvidenciasController {
         fileSize: 5 * 1024 * 1024,
       },
       fileFilter: (req, file, callback) => {
-  const extension = extname(file.originalname).toLowerCase();
+        const extension = extname(
+          file.originalname,
+        ).toLowerCase();
 
-  const extensionesPermitidas = ['.jpg', '.jpeg', '.png'];
-  const tiposPermitidos = ['image/jpeg', 'image/png'];
+        const extensionesPermitidas = [
+          '.jpg',
+          '.jpeg',
+          '.png',
+        ];
 
-  if (
-    !extensionesPermitidas.includes(extension) ||
-    !tiposPermitidos.includes(file.mimetype)
-  ) {
-    callback(
-  new BadRequestException(
-    'Solo se permiten imágenes JPG, JPEG y PNG',
-  ),
-  false,
-);
-return;
-  }
+        const tiposPermitidos = [
+          'image/jpeg',
+          'image/png',
+        ];
 
-  callback(null, true);
-},
+        if (
+          !extensionesPermitidas.includes(extension) ||
+          !tiposPermitidos.includes(file.mimetype)
+        ) {
+          callback(
+            new BadRequestException(
+              'Solo se permiten imágenes JPG, JPEG y PNG',
+            ),
+            false,
+          );
+          return;
+        }
+
+        callback(null, true);
+      },
     }),
   )
   @ApiOperation({
@@ -126,6 +140,22 @@ return;
     };
   }
 
+  @Get('reportes/:idReporte')
+  @Roles(1, 2, 3)
+  @ApiOperation({
+    summary: 'Listar las evidencias de un reporte',
+  })
+  async listarPorReporte(
+    @Param('idReporte') idReporte: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.evidenciasService.listarPorReporte(
+      Number(idReporte),
+      Number(user.sub),
+      user.idRol,
+    );
+  }
+
   // CONSULTAR Y DESCARGAR UNA EVIDENCIA
   @Get('archivos/:nombreArchivo')
   @Roles(1, 2, 3)
@@ -137,7 +167,9 @@ return;
     @Res() respuesta: Response,
   ) {
     if (basename(nombreArchivo) !== nombreArchivo) {
-      throw new NotFoundException('Archivo no encontrado');
+      throw new NotFoundException(
+        'Archivo no encontrado',
+      );
     }
 
     const evidencia =
@@ -154,17 +186,20 @@ return;
     try {
       await access(rutaArchivo);
     } catch {
-      throw new NotFoundException('Archivo no encontrado');
+      throw new NotFoundException(
+        'Archivo no encontrado',
+      );
     }
 
     respuesta.setHeader(
-  'Content-Type',
-  evidencia.tipo_archivo === 'jpg'
-    ? 'image/jpeg'
-    : evidencia.tipo_archivo === 'png'
-      ? 'image/png'
-      : 'application/pdf',
-);
+      'Content-Type',
+      evidencia.tipo_archivo === 'jpg'
+        ? 'image/jpeg'
+        : evidencia.tipo_archivo === 'png'
+          ? 'image/png'
+          : 'application/pdf',
+    );
+
     respuesta.setHeader(
       'Content-Disposition',
       'attachment',

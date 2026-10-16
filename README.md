@@ -134,6 +134,12 @@ La publicación anónima está destinada a ocultar la identidad del autor ante o
 | PATCH | `/reportes/:id` | Bearer | Actualizar un reporte según los permisos. |
 | DELETE | `/reportes/:id` | Bearer | Eliminar un reporte según los permisos. |
 
+Las rutas protegidas requieren el encabezado:
+
+`Authorization: Bearer <accessToken>`
+
+Sin un token válido responden con `401 Unauthorized`.
+
 Las rutas de reportes están protegidas mediante autenticación JWT.
 
 ### Autenticación
@@ -220,9 +226,20 @@ El backend se encuentra en desarrollo.
 - Revisar la protección de identidad de reportes anónimos.
 - Migrar las credenciales de MySQL a variables de entorno.
 - Fortalecer la seguridad de las consultas SQL.
-- Completar la documentación de la API.
+- Documentación OpenAPI/Swagger disponible en `/docs`.
 - Realizar pruebas funcionales y de seguridad.
 - Registrar resultados y evidencias.
+
+## Documentación de la API
+
+La documentación interactiva de la API está disponible en:
+
+`http://localhost:3000/docs`
+
+El documento OpenAPI en formato JSON está disponible en:
+
+`http://localhost:3000/docs-json`
+
 
 ## Documentación adicional
 
