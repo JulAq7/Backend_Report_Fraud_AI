@@ -4,19 +4,20 @@ import type { Pool } from 'mysql2/promise';
 
 export const DB_POOL = 'DB_POOL';
 
-// Conexión a la base de datos de ReportFraudAI
-const DATABASE_URL =
-  'mysql://root:PASSWORD@localhost:3306/ReportFraudAI';
-
 @Module({
   providers: [
     {
-      provide: DB_POOL,
-      useFactory: () => {
-        console.log('Conectando a ' + DATABASE_URL);
-        return createPool({ uri: DATABASE_URL });
-      },
+    provide: DB_POOL,
+    useFactory: () => {
+      return createPool({
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_PORT),
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+      });
     },
+  },
   ],
   exports: [DB_POOL],
 })

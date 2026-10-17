@@ -69,11 +69,15 @@ export class ReportesService {
     );
   }
 
-  async findPendientes(): Promise<ReporteResponseDto[]> {
+  async findPendientes() {
     const reportes = await this.repository.findPendientes();
 
-    return reportes.map((r) =>
-      ReporteResponseDto.fromEntity(r),
+    return reportes.map(
+      ({ reporte, categoria, subcategoria }) => ({
+        ...ReporteResponseDto.fromEntity(reporte),
+        categoria,
+        subcategoria,
+      }),
     );
   }
 
@@ -122,16 +126,23 @@ export class ReportesService {
   * @returns El reporte encontrado.
   * @throws NotFoundException si no existe un reporte con ese id.
   */
-  async findOne(id: number): Promise<ReporteResponseDto> {
-    const reporte = await this.repository.findById(id);
+  async findOne(id: number) {
+    const detalle =
+      await this.repository.findDetalleById(id);
 
-    if (!reporte) {
+    if (!detalle) {
       throw new NotFoundException(
         'Reporte ' + id + ' no encontrado',
       );
     }
 
-    return ReporteResponseDto.fromEntity(reporte);
+    return {
+      ...ReporteResponseDto.fromEntity(
+        detalle.reporte,
+      ),
+      categoria: detalle.categoria,
+      subcategoria: detalle.subcategoria,
+    };
   }
 
 
