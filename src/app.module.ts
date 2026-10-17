@@ -6,9 +6,12 @@ import { ReportesModule } from './reportes/reportes.module';
 import { EvidenciasModule } from './evidencias/evidencias.module';
 import { ConfigModule } from '@nestjs/config';
 
+import { CategoriasModule } from './categorias/categorias.module';
+
+
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true,}), AuthModule, ReportesModule,
-     EvidenciasModule],
+     EvidenciasModule,CategoriasModule],
   controllers: [AppController],
   providers: [AppService],
 })
