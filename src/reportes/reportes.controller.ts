@@ -138,6 +138,21 @@ export class ReportesController {
     return this.service.getEstadisticas();
   }
 
+  @Get('historial')
+  @Roles(2)
+  @ApiOperation({
+    summary:
+      'Consultar el historial de reportes procesados',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Lista de reportes aprobados o rechazados',
+  })
+  findHistorial() {
+    return this.service.findHistorial();
+  }
+
   @Get(':id')
   @Roles(1, 2, 3)
   @ApiOperation({

@@ -61,6 +61,54 @@ export class ReportesRepository {
     }));
   }
 
+  async findHistorial(): Promise<
+    {
+      reporte: Reporte;
+      categoria: string;
+      subcategoria: string;
+    }[]
+  > {
+    const [rows]: any = await this.pool.query(`
+      SELECT
+        r.id_reporte,
+        r.id_usuario,
+        r.id_subcategoria,
+        r.id_estado,
+        r.descripcion,
+        r.plataforma,
+        r.entidad_reportada,
+        r.publicacion_anonima,
+        r.fecha_registro,
+        c.nombre_categoria,
+        s.nombre_subcategoria
+      FROM reporte r
+      INNER JOIN subcategoria_reporte s
+        ON r.id_subcategoria = s.id_subcategoria
+      INNER JOIN categoria_reporte c
+        ON s.id_categoria = c.id_categoria
+      WHERE r.id_estado IN (2, 3)
+      ORDER BY r.fecha_registro DESC
+    `);
+
+    return rows.map((row: any) => ({
+      reporte: {
+        idReporte: row.id_reporte,
+        idUsuario: row.id_usuario,
+        idSubcategoria: row.id_subcategoria,
+        idEstado: row.id_estado,
+        descripcion: row.descripcion,
+        plataforma: row.plataforma,
+        entidadReportada: row.entidad_reportada,
+        publicacionAnonima: Boolean(
+          row.publicacion_anonima,
+        ),
+        fechaRegistro: row.fecha_registro,
+      },
+      categoria: row.nombre_categoria,
+      subcategoria: row.nombre_subcategoria,
+    }));
+  }
+
   async findDetalleById(
     id: number,
   ): Promise<
