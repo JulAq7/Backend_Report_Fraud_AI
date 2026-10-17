@@ -81,6 +81,18 @@ export class ReportesService {
     );
   }
 
+  async findHistorial() {
+    const reportes =
+      await this.repository.findHistorial();
+
+    return reportes.map(
+      ({ reporte, categoria, subcategoria }) => ({
+        ...ReporteResponseDto.fromEntity(reporte),
+        categoria,
+        subcategoria,
+      }),
+    );
+  }
 
   /**
    * Obtiene el resumen general de reportes por estado.
