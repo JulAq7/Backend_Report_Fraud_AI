@@ -25,15 +25,84 @@ export class ReportesRepository {
     return rows.map(toEntity);
   }
 
-  async findPendientes(): Promise<Reporte[]> {
+  async findPendientes(): Promise<
+    {
+      reporte: Reporte;
+      categoria: string;
+      subcategoria: string;
+    }[]
+  > {
     const [rows] = await this.pool.query<RowDataPacket[]>(
-      `SELECT ${COLUMNS}
-      FROM reporte
-      WHERE id_estado = 1
-      ORDER BY fecha_registro DESC`,
+      `SELECT
+        r.id_reporte,
+        r.id_usuario,
+        r.id_subcategoria,
+        r.id_estado,
+        r.descripcion,
+        r.plataforma,
+        r.entidad_reportada,
+        r.publicacion_anonima,
+        r.fecha_registro,
+        c.nombre_categoria,
+        s.nombre_subcategoria
+      FROM reporte r
+      INNER JOIN subcategoria_reporte s
+        ON r.id_subcategoria = s.id_subcategoria
+      INNER JOIN categoria_reporte c
+        ON s.id_categoria = c.id_categoria
+      WHERE r.id_estado = 1
+      ORDER BY r.fecha_registro DESC`,
     );
 
-    return rows.map(toEntity);
+    return rows.map((row) => ({
+      reporte: toEntity(row),
+      categoria: String(row.nombre_categoria),
+      subcategoria: String(row.nombre_subcategoria),
+    }));
+  }
+
+  async findDetalleById(
+    id: number,
+  ): Promise<
+    | {
+        reporte: Reporte;
+        categoria: string;
+        subcategoria: string;
+      }
+    | undefined
+  > {
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT
+        r.id_reporte,
+        r.id_usuario,
+        r.id_subcategoria,
+        r.id_estado,
+        r.descripcion,
+        r.plataforma,
+        r.entidad_reportada,
+        r.publicacion_anonima,
+        r.fecha_registro,
+        c.nombre_categoria,
+        s.nombre_subcategoria
+      FROM reporte r
+      INNER JOIN subcategoria_reporte s
+        ON r.id_subcategoria = s.id_subcategoria
+      INNER JOIN categoria_reporte c
+        ON s.id_categoria = c.id_categoria
+      WHERE r.id_reporte = ?
+      LIMIT 1`,
+      [id],
+    );
+
+    if (!rows[0]) {
+      return undefined;
+    }
+
+    return {
+      reporte: toEntity(rows[0]),
+      categoria: String(rows[0].nombre_categoria),
+      subcategoria: String(rows[0].nombre_subcategoria),
+    };
   }
 
   async getResumen(): Promise<{
