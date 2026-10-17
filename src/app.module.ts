@@ -5,13 +5,14 @@ import { AuthModule } from './auth/auth.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { EvidenciasModule } from './evidencias/evidencias.module';
 import { ConfigModule } from '@nestjs/config';
-
 import { CategoriasModule } from './categorias/categorias.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+
 
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true,}), AuthModule, ReportesModule,
-     EvidenciasModule,CategoriasModule],
+     EvidenciasModule,CategoriasModule, UsuariosModule,],
   controllers: [AppController],
   providers: [AppService],
 })

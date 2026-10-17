@@ -94,6 +94,30 @@ export class ReportesService {
     );
   }
 
+  
+  /**
+   * Consulta los reportes públicos aprobados.
+   * Permite buscar por texto cuando se proporciona un término.
+   */
+  async findPublicos(buscar?: string) {
+    if (buscar !== undefined && typeof buscar !== 'string') {
+      throw new BadRequestException(
+        'El término de búsqueda debe ser texto',
+      );
+    }
+
+    const termino = buscar?.trim() ?? '';
+
+    if (termino.length > 150) {
+      throw new BadRequestException(
+        'El término de búsqueda es demasiado largo',
+      );
+    }
+
+    return this.repository.findPublicos(termino);
+  }
+
+
   /**
    * Obtiene el resumen general de reportes por estado.
    * @returns Total de reportes, pendientes, aprobados y rechazados.
