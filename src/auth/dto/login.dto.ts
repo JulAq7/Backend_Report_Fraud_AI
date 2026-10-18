@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsInt, IsIn } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsString,
+  IsInt,
+  IsIn,
+  IsOptional,
+} from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({
@@ -16,12 +22,14 @@ export class LoginDto {
   @IsString()
   contrasena: string | undefined;
 
-  @ApiProperty({
-    description: 'Rol con el que el usuario solicita iniciar sesión',
+  @ApiPropertyOptional({
+    description:
+      'Rol solicitado. Es opcional; si se envía, debe coincidir con el rol real del usuario.',
     example: 1,
     enum: [1, 2, 3],
   })
+  @IsOptional()
   @IsInt()
   @IsIn([1, 2, 3])
-  idRolSolicitado: number | undefined;
+  idRolSolicitado?: number;
 }

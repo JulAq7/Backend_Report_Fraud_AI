@@ -30,6 +30,7 @@ export class UsersRepository {
     nombreUsuario: string,
     correoElectronico: string,
     contrasenaHash: string,
+    idRol: number = 1,
   ): Promise<User> {
     await this.pool.query(
       `INSERT INTO usuario (
@@ -42,7 +43,7 @@ export class UsersRepository {
         '${nombreUsuario}',
         '${correoElectronico}',
         '${contrasenaHash}',
-        '1'
+        '${idRol}'
       )`,
     );
 
