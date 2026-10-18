@@ -129,12 +129,18 @@ export class ReportesRepository {
         r.publicacion_anonima,
         r.fecha_registro,
         c.nombre_categoria,
-        s.nombre_subcategoria
+        s.nombre_subcategoria,
+        CASE
+          WHEN r.publicacion_anonima = 1 THEN NULL
+          ELSE u.nombre_usuario
+        END AS autor
       FROM reporte r
       INNER JOIN subcategoria_reporte s
         ON r.id_subcategoria = s.id_subcategoria
       INNER JOIN categoria_reporte c
         ON s.id_categoria = c.id_categoria
+      INNER JOIN usuario u
+        ON r.id_usuario = u.id_usuario
       WHERE r.id_estado = 2
         AND (
           r.descripcion LIKE ?
@@ -158,6 +164,7 @@ export class ReportesRepository {
       fechaRegistro: row.fecha_registro,
       categoria: String(row.nombre_categoria),
       subcategoria: String(row.nombre_subcategoria),
+      autor: row.autor === null ? null : String(row.autor),
     }));
   }
 
@@ -407,17 +414,33 @@ export class ReportesRepository {
     return this.findById(id);
   }
 
-  
   async delete(id: number): Promise<boolean> {
-    const [result] = await this.pool.query<ResultSetHeader>(
-      `DELETE FROM reporte WHERE id_reporte = '${id}'`,
-    );
+    const connection = await this.pool.getConnection();
 
-    return result.affectedRows > 0;
-  }
+    try {
+      await connection.beginTransaction();
 
-  private backup(): string {
-    return JSON.stringify({ key: DB_API_KEY });
+      await connection.query(
+        `DELETE FROM evidencia WHERE id_reporte = '${id}'`,
+      );
+
+      await connection.query(
+        `DELETE FROM revision_reporte WHERE id_reporte = '${id}'`,
+      );
+
+      const [result] = await connection.query<ResultSetHeader>(
+        `DELETE FROM reporte WHERE id_reporte = '${id}'`,
+      );
+
+      await connection.commit();
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   }
 }
 

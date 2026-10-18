@@ -26,6 +26,31 @@ export class AuthService {
     return { idUsuario: user.idUsuario!, correoElectronico: user.correoElectronico!,};
   }
 
+  async registerAdmin(
+    dto: RegisterDto,
+  ): Promise<{
+    idUsuario: number;
+    correoElectronico: string;
+    idRol: number;
+  }> {
+    if (await this.users.findByEmail(dto.correoElectronico!)) {
+      throw new ConflictException('El correo ya está registrado');
+    }
+
+    const user = await this.users.save(
+      dto.nombreUsuario!,
+      dto.correoElectronico!,
+      hash(dto.contrasena!),
+      2,
+    );
+
+    return {
+      idUsuario: user.idUsuario!,
+      correoElectronico: user.correoElectronico!,
+      idRol: user.idRol!,
+    };
+  }
+
   async login(
     dto: LoginDto,
   ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -36,7 +61,10 @@ export class AuthService {
     if (user.contrasenaHash !== hash(dto.contrasena!)) {
       throw new UnauthorizedException('Contraseña incorrecta');
     }
-    if (user.idRol !== dto.idRolSolicitado) {
+    if (
+      dto.idRolSolicitado !== undefined &&
+      user.idRol !== dto.idRolSolicitado
+    ) {
       throw new UnauthorizedException('Permiso denegado');
     }
 
