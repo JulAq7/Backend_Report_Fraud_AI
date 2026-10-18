@@ -109,6 +109,59 @@ export class ReportesRepository {
     }));
   }
 
+
+  
+  /**
+   * Consulta los reportes públicos aprobados.
+   * Permite filtrar los resultados mediante un término de búsqueda.
+   */
+  async findPublicos(buscar: string = '') {
+    const patron = `%${buscar}%`;
+
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
+      `SELECT
+        r.id_reporte,
+        r.id_subcategoria,
+        r.id_estado,
+        r.descripcion,
+        r.plataforma,
+        r.entidad_reportada,
+        r.publicacion_anonima,
+        r.fecha_registro,
+        c.nombre_categoria,
+        s.nombre_subcategoria
+      FROM reporte r
+      INNER JOIN subcategoria_reporte s
+        ON r.id_subcategoria = s.id_subcategoria
+      INNER JOIN categoria_reporte c
+        ON s.id_categoria = c.id_categoria
+      WHERE r.id_estado = 2
+        AND (
+          r.descripcion LIKE ?
+          OR r.plataforma LIKE ?
+          OR r.entidad_reportada LIKE ?
+          OR c.nombre_categoria LIKE ?
+          OR s.nombre_subcategoria LIKE ?
+        )
+      ORDER BY r.fecha_registro DESC`,
+      [patron, patron, patron, patron, patron],
+    );
+
+    return rows.map((row) => ({
+      idReporte: Number(row.id_reporte),
+      idSubcategoria: Number(row.id_subcategoria),
+      idEstado: Number(row.id_estado),
+      descripcion: String(row.descripcion),
+      plataforma: String(row.plataforma),
+      entidadReportada: String(row.entidad_reportada),
+      publicacionAnonima: Boolean(row.publicacion_anonima),
+      fechaRegistro: row.fecha_registro,
+      categoria: String(row.nombre_categoria),
+      subcategoria: String(row.nombre_subcategoria),
+    }));
+  }
+
+
   async findDetalleById(
     id: number,
   ): Promise<

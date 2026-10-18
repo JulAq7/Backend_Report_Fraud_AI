@@ -7,11 +7,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -151,6 +153,26 @@ export class ReportesController {
   })
   findHistorial() {
     return this.service.findHistorial();
+  }
+
+  
+  @Get('publicos')
+  @Roles(1, 2, 3)
+  @ApiOperation({
+    summary: 'Consultar y buscar reportes públicos aprobados',
+  })
+  @ApiQuery({
+    name: 'buscar',
+    required: false,
+    type: String,
+    description: 'Texto para buscar reportes públicos',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de reportes públicos aprobados',
+  })
+  findPublicos(@Query('buscar') buscar?: string) {
+    return this.service.findPublicos(buscar);
   }
 
   @Get(':id')
