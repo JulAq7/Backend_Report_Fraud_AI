@@ -49,6 +49,21 @@ export class UsersRepository {
 
     return (await this.findByEmail(correoElectronico))!;
   }
+
+
+  async updatePasswordHash(
+    idUsuario: number,
+    contrasenaHash: string,
+  ): Promise<void> {
+    await this.pool.execute(
+      `
+      UPDATE usuario
+      SET contrasena_hash = ?
+      WHERE id_usuario = ?
+      `,
+      [contrasenaHash, idUsuario],
+    );
+  }
 }
 
 function toEntity(row: any): User {
