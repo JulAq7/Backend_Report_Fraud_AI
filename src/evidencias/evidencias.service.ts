@@ -8,6 +8,7 @@ import { EvidenciasRepository } from './evidencias.repository';
 import { ReportesRepository } from '../reportes/reportes.repository';
 import { BadRequestException } from '@nestjs/common';
 import { open, unlink } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 @Injectable()
 export class EvidenciasService {
@@ -35,7 +36,7 @@ export class EvidenciasService {
 
   async validarContenidoImagen(
     archivo: Express.Multer.File,): Promise<void> {
-    const manejador = await open(archivo.path, 'r');
+    const manejador = await open(rutaEvidencia(archivo), 'r');
     const cabecera = Buffer.alloc(8);
 
     try {
@@ -86,7 +87,7 @@ export class EvidenciasService {
         tipoArchivo,
       );
     } catch (error) {
-      await unlink(archivo.path).catch(() => undefined);
+      await unlink(rutaEvidencia(archivo)).catch(() => undefined);
       throw error;
     }
   }
@@ -144,4 +145,8 @@ export class EvidenciasService {
     }));
   }
 
+}
+
+function rutaEvidencia(archivo: Express.Multer.File): string {
+  return join(process.cwd(), 'uploads', basename(archivo.filename));
 }

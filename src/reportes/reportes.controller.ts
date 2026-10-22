@@ -195,8 +195,13 @@ export class ReportesController {
   })
   findOne(
     @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
   ): Promise<ReporteResponseDto> {
-    return this.service.findOne(Number(id));
+    return this.service.findOne(
+      Number(id),
+      Number(user.sub),
+      user.idRol,
+    );
   }
 
 

@@ -27,10 +27,10 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: [
-      'http://localhost:3001',
-      'http://192.168.40.10:3001',
-    ],
+    origin: (process.env.CORS_ORIGINS ?? '')
+      .split(',')
+      .map((origen) => origen.trim())
+      .filter(Boolean),
     methods: [
       'GET',
       'POST',
@@ -73,4 +73,4 @@ async function bootstrap() {
   );
 }
 
-bootstrap();
+void bootstrap();

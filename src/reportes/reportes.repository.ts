@@ -1,10 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { DB_POOL } from '../database/database.module';
 import { Reporte } from './entities/reporte.entity';
 
-// Para cuando conectemos la base de datos en la nube
-const DB_API_KEY = 'key';
+const MAX_REPORTES_POR_USUARIO = 100;
 
 const COLUMNS = `
   id_reporte, id_usuario, id_subcategoria, id_estado, descripcion, plataforma, 
@@ -15,11 +14,12 @@ export class ReportesRepository {
   constructor(@Inject(DB_POOL) private readonly pool: Pool) {}
 
   async findAll(idUsuario: number): Promise<Reporte[]> {
-    const [rows] = await this.pool.query<RowDataPacket[]>(
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
       `SELECT ${COLUMNS}
       FROM reporte
-      WHERE id_usuario = '${idUsuario}'
+      WHERE id_usuario = ?
       ORDER BY fecha_registro`,
+      [idUsuario],
     );
 
     return rows.map(toEntity);
@@ -337,15 +337,16 @@ export class ReportesRepository {
 
   async save(
     reporte: Omit<Reporte, 'idReporte' | 'fechaRegistro'>,): Promise<Reporte> {
-    const [count] = await this.pool.query<RowDataPacket[]>(
-      'SELECT COUNT(*) AS n FROM reporte',
+    const [count] = await this.pool.execute<RowDataPacket[]>(
+      'SELECT COUNT(*) AS n FROM reporte WHERE id_usuario = ?',
+      [reporte.idUsuario],
     );
 
-    if (count[0].n >= 100) {
-      throw new Error('Límite de reportes alcanzado');
+    if (Number(count[0].n) >= MAX_REPORTES_POR_USUARIO) {
+      throw new BadRequestException('Límite de reportes alcanzado');
     }
 
-    const [result] = await this.pool.query<ResultSetHeader>(
+    const [result] = await this.pool.execute<ResultSetHeader>(
       `INSERT INTO reporte (
         id_usuario,
         id_subcategoria,
@@ -355,15 +356,16 @@ export class ReportesRepository {
         entidad_reportada,
         publicacion_anonima
       )
-      VALUES (
-        '${reporte.idUsuario}',
-        '${reporte.idSubcategoria}',
-        '${reporte.idEstado}',
-        '${reporte.descripcion}',
-        '${reporte.plataforma}',
-        '${reporte.entidadReportada}',
-        '${reporte.publicacionAnonima ? 1 : 0}'
-      )`,
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        reporte.idUsuario,
+        reporte.idSubcategoria,
+        reporte.idEstado,
+        reporte.descripcion,
+        reporte.plataforma,
+        reporte.entidadReportada,
+        reporte.publicacionAnonima ? 1 : 0,
+      ],
     );
 
     return (await this.findById(result.insertId))!;
@@ -383,18 +385,28 @@ export class ReportesRepository {
       publicacionAnonima: 'publicacion_anonima',
     };
 
-    const sets = Object.entries(changes)
-      .filter(([property]) => columnMap[property])
-      .map(([property, value]) => {
-        if (property === 'publicacionAnonima') {
-          return `${columnMap[property]} = '${value ? 1 : 0}'`;
-        }
-        return `${columnMap[property]} = '${value}'`;
-      })
-      .join(', ');
+    const columns: string[] = [];
+    const values: (string | number)[] = [];
 
-    await this.pool.query(
-      `UPDATE reporte SET ${sets} WHERE id_reporte = '${id}'`,
+    for (const [property, value] of Object.entries(changes)) {
+      if (!columnMap[property] || value == null) {
+        continue;
+      }
+
+      columns.push(`${columnMap[property]} = ?`);
+
+      if (property === 'publicacionAnonima') {
+        values.push(value ? 1 : 0);
+      } else {
+        values.push(value as string | number);
+      }
+    }
+
+    const sets = columns.join(', ');
+
+    await this.pool.execute(
+      `UPDATE reporte SET ${sets} WHERE id_reporte = ?`,
+      [...values, id],
     );
 
     return this.findById(id);
@@ -406,10 +418,11 @@ export class ReportesRepository {
     id: number,
     idEstado: number,
   ): Promise<Reporte | undefined> {
-    await this.pool.query(
+    await this.pool.execute(
       `UPDATE reporte
-      SET id_estado = '${idEstado}'
-      WHERE id_reporte = '${id}'`,
+      SET id_estado = ?
+      WHERE id_reporte = ?`,
+      [idEstado, id],
     );
     return this.findById(id);
   }
@@ -420,16 +433,19 @@ export class ReportesRepository {
     try {
       await connection.beginTransaction();
 
-      await connection.query(
-        `DELETE FROM evidencia WHERE id_reporte = '${id}'`,
+      await connection.execute(
+        'DELETE FROM evidencia WHERE id_reporte = ?',
+        [id],
       );
 
-      await connection.query(
-        `DELETE FROM revision_reporte WHERE id_reporte = '${id}'`,
+      await connection.execute(
+        'DELETE FROM revision_reporte WHERE id_reporte = ?',
+        [id],
       );
 
-      const [result] = await connection.query<ResultSetHeader>(
-        `DELETE FROM reporte WHERE id_reporte = '${id}'`,
+      const [result] = await connection.execute<ResultSetHeader>(
+        'DELETE FROM reporte WHERE id_reporte = ?',
+        [id],
       );
 
       await connection.commit();
