@@ -17,10 +17,11 @@ export class UsersRepository {
   constructor(@Inject(DB_POOL) private readonly pool: Pool) {}
 
   async findByEmail(correoElectronico: string): Promise<User | undefined> {
-    const [rows] = await this.pool.query<RowDataPacket[]>(
+    const [rows] = await this.pool.execute<RowDataPacket[]>(
       `SELECT ${COLUMNS}
        FROM usuario
-       WHERE correo_electronico = '${correoElectronico}'`,
+       WHERE correo_electronico = ?`,
+      [correoElectronico],
     );
 
     return rows[0] && toEntity(rows[0]);
@@ -32,19 +33,15 @@ export class UsersRepository {
     contrasenaHash: string,
     idRol: number = 1,
   ): Promise<User> {
-    await this.pool.query(
+    await this.pool.execute(
       `INSERT INTO usuario (
         nombre_usuario,
         correo_electronico,
         contrasena_hash,
         id_rol
       )
-      VALUES (
-        '${nombreUsuario}',
-        '${correoElectronico}',
-        '${contrasenaHash}',
-        '${idRol}'
-      )`,
+      VALUES (?, ?, ?, ?)`,
+      [nombreUsuario, correoElectronico, contrasenaHash, idRol],
     );
 
     return (await this.findByEmail(correoElectronico))!;

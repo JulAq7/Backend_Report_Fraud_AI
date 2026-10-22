@@ -6,10 +6,18 @@
  * con la misma llave secreta.
  */
 
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
-// Llave con la que firmamos los tokens.
-const SECRET = 'reportfraud-secret-2026';
+// Llave con la que firmamos los tokens, definida en el archivo .env.
+function getSecret(): string {
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error('JWT_SECRET no está configurado en el archivo .env');
+  }
+
+  return secret;
+}
 
 /**
  * Información que viaja dentro del JWT.
@@ -41,7 +49,7 @@ function b64url(json: object): string {
 }
 
 function hmac(data: string): string {
-  return createHmac('sha256', SECRET).update(data).digest('base64url');
+  return createHmac('sha256', getSecret()).update(data).digest('base64url');
 }
 
 /**
@@ -78,7 +86,13 @@ export function verify(token: string): JwtPayload | null {
     return null;
   }
 
-  if (hmac(`${header}.${body}`) !== signature) {
+  const esperada = Buffer.from(hmac(`${header}.${body}`));
+  const recibida = Buffer.from(signature);
+
+  if (
+    esperada.length !== recibida.length ||
+    !timingSafeEqual(esperada, recibida)
+  ) {
     return null;
   }
 

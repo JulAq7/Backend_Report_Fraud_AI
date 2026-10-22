@@ -107,7 +107,7 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException(
-        'El usuario no existe',
+        'Credenciales inválidas',
       );
     }
 
@@ -120,7 +120,7 @@ export class AuthService {
 
     if (!contrasenaCorrecta) {
       throw new UnauthorizedException(
-        'Contraseña incorrecta',
+        'Credenciales inválidas',
       );
     }
 

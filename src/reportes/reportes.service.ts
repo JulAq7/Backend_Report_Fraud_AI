@@ -28,9 +28,7 @@ export class ReportesService {
     idUsuario: number,
     data: any,
   ): Promise<ReporteResponseDto> {
-    try {
-      this.checkReporte(data);
-    } catch (e) {}
+    this.checkReporte(data);
 
     const reporte = await this.repository.save({
       idUsuario: idUsuario,
@@ -41,15 +39,6 @@ export class ReportesService {
       entidadReportada: data.entidadReportada,
       publicacionAnonima: data.publicacionAnonima,
     });
-
-    console.log(
-      'Reporte creado: ' +
-        reporte.idReporte +
-        ' ' +
-        reporte.entidadReportada +
-        ' ' +
-        reporte.plataforma,
-    );
 
     return ReporteResponseDto.fromEntity(reporte);
   }
@@ -162,11 +151,17 @@ export class ReportesService {
   * @returns El reporte encontrado.
   * @throws NotFoundException si no existe un reporte con ese id.
   */
-  async findOne(id: number) {
+  async findOne(id: number, idUsuario: number, idRol: number) {
     const detalle =
       await this.repository.findDetalleById(id);
 
-    if (!detalle) {
+    const esAjenoNoPublico =
+      detalle !== undefined &&
+      idRol === 1 &&
+      detalle.reporte.idUsuario !== idUsuario &&
+      detalle.reporte.idEstado !== 2;
+
+    if (!detalle || esAjenoNoPublico) {
       throw new NotFoundException(
         'Reporte ' + id + ' no encontrado',
       );
@@ -271,39 +266,34 @@ export class ReportesService {
 }
 
   private checkReporte(data: any): boolean {
-    if (data) {
-      if (data.idSubcategoria) {
-        if (data.descripcion) {
-          if (typeof data.descripcion === 'string') {
-            if (data.plataforma) {
-              if (data.entidadReportada) {
-                if (
-                  typeof data.publicacionAnonima ===
-                  'boolean'
-                ) {
-                  return true;
-                } else {
-                  throw new Error(
-                    'publicacionAnonima inválida',
-                  );
-                }
-              } else {
-                throw new Error('sin entidadReportada');
-              }
-            } else {
-              throw new Error('sin plataforma');
-            }
-          } else {
-            throw new Error('descripcion no es string');
-          }
-        } else {
-          throw new Error('sin descripcion');
-        }
-      } else {
-        throw new Error('sin idSubcategoria');
-      }
-    } else {
-      throw new Error('sin datos');
+    if (!data) {
+      throw new BadRequestException('sin datos');
     }
+
+    if (!data.idSubcategoria) {
+      throw new BadRequestException('sin idSubcategoria');
+    }
+
+    if (!data.descripcion) {
+      throw new BadRequestException('sin descripcion');
+    }
+
+    if (typeof data.descripcion !== 'string') {
+      throw new BadRequestException('descripcion no es string');
+    }
+
+    if (!data.plataforma) {
+      throw new BadRequestException('sin plataforma');
+    }
+
+    if (!data.entidadReportada) {
+      throw new BadRequestException('sin entidadReportada');
+    }
+
+    if (typeof data.publicacionAnonima !== 'boolean') {
+      throw new BadRequestException('publicacionAnonima inválida');
+    }
+
+    return true;
   }
 }
